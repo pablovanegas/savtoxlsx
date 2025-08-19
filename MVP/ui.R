@@ -1,70 +1,55 @@
 # =============================================================================
-# ARCHIVO DE INTERFAZ DE USUARIO (ui.R) - v1.0
+# ARCHIVO DE INTERFAZ DE USUARIO (ui.R) - v2.0 (Conversor Dedicado)
 #
-# Descripción: Define la estructura y apariencia de la aplicación Shiny.
-# Changelog v1.0:
-# - Se añade soporte para archivos .sav en el fileInput.
-# - Se añade un botón para descargar el diccionario de datos.
+# Descripción: Interfaz minimalista enfocada únicamente en la conversión
+#              de archivos .sav a .xlsx y .txt.
 # =============================================================================
 
 library(shiny)
 library(bslib)
-library(DT)
+library(shinyjs) # Necesario para habilitar/deshabilitar botones
 
-ui <- page_navbar(
-  title = "Analizador Demográfico Interactivo",
+ui <- page_fluid(
+  useShinyjs(), # Activa shinyjs
   theme = bs_theme(version = 5, bootswatch = "cerulean"),
   
-  # --- Panel Lateral de Controles ---
-  sidebar = sidebar(
-    title = "Controles de Análisis",
-    
-    # 1. Selección de Archivo
-    fileInput("file_upload", "Cargar Archivo de Datos (.sav, .xlsx, .csv)",
-              accept = c(".csv", ".xlsx", ".sav"),
-              buttonLabel = "Buscar...",
-              placeholder = "Ningún archivo seleccionado"),
-    
-    # Espacio para el botón de descarga del diccionario
-    uiOutput("download_dictionary_ui"),
-    
-    hr(), # Una línea divisoria
-    
-    # 2. Filtro dinámico por años
-    uiOutput("year_selector_ui"),
-    
-    # Botón para ejecutar el análisis
-    actionButton("run_analysis", "Generar Análisis", icon = icon("cogs"), class = "btn-primary btn-lg")
-  ),
-  
-  # --- Panel Principal con Resultados ---
-  nav_panel(
-    title = "Resultados del Análisis",
-    icon = icon("chart-bar"),
-    
-    # Layout para organizar los outputs
-    layout_column_wrap(
-      width = 1/2,
+  layout_sidebar(
+    sidebar = sidebar(
+      title = "Controles",
+      fileInput("file_upload", "1. Cargar Archivo .sav",
+                accept = c(".sav"),
+                buttonLabel = "Buscar...",
+                placeholder = "Ningún archivo seleccionado"),
       
-      # --- Columna Izquierda: Tablas ---
-      card(
-        card_header("Tablas de Indicadores"),
-        tabsetPanel(
-          id = "tablas_panel",
-          tabPanel("Dependencia", DTOutput("tabla_dependencia")),
-          tabPanel("Evolución", DTOutput("tabla_adicionales"))
-        )
+      actionButton("run_conversion", "2. Procesar Archivo", icon = icon("cogs"), class = "btn-primary btn-lg"),
+      
+      hr(),
+      
+      h5("3. Descargar Resultados"),
+      # Los botones de descarga empiezan deshabilitados
+      disabled(
+        downloadButton("export_excel", "Descargar Excel (.xlsx)", icon = icon("file-excel"))
       ),
-      
-      # --- Columna Derecha: Gráficos ---
-      card(
-        card_header("Visualizaciones Gráficas"),
-        tabsetPanel(
-          id = "graficos_panel",
-          tabPanel("Dependencia", plotOutput("plot_dependencia")),
-          tabPanel("Composición", plotOutput("plot_composicion")),
-          tabPanel("Pirámide", plotOutput("plot_piramide", height = "600px"))
-        )
+      br(),
+      disabled(
+        downloadButton("export_dictionary", "Descargar Diccionario (.txt)", icon = icon("book"))
+      )
+    ),
+    
+    # Panel principal
+    card(
+      card_header("Conversor de Archivos SPSS (.sav)"),
+      card_body(
+        p("Bienvenido al conversor de archivos de SPSS."),
+        p("Instrucciones:"),
+        tags$ol(
+          tags$li("Cargue su archivo .sav usando el panel de la izquierda."),
+          tags$li("Presione el botón 'Procesar Archivo'."),
+          tags$li("Una vez que el proceso termine, los botones de descarga se activarán.")
+        ),
+        hr(),
+        h4("Estado del Procesamiento:"),
+        textOutput("status_text") # Para mostrar mensajes al usuario
       )
     )
   )
